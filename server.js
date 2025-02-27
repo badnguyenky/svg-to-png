@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const svg2img = require("svg2img");
 const axios = require("axios");
+const qs = require("qs"); // Import querystring utility
 
 const app = express();
 app.use(cors());
@@ -20,15 +21,20 @@ app.post("/convert", (req, res) => {
     // Convert PNG buffer to Base64
     const base64Image = buffer.toString("base64");
 
+    // Prepare form-urlencoded body
+    const formBody = qs.stringify({ source: base64Image });
+
     try {
-      // Upload Base64 PNG to FreeImage.host
-      const uploadResponse = await axios.post("https://freeimage.host/api/1/upload", null, {
-        params: {
-          key: FREEIMAGE_API_KEY,
-          source: base64Image,
-          format: "json"
+      // Upload PNG (Base64) using form-urlencoded
+      const uploadResponse = await axios.post(
+        `https://freeimage.host/api/1/upload?key=${FREEIMAGE_API_KEY}`,
+        formBody,
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
         }
-      });
+      );
 
       if (uploadResponse.data.status_code === 200) {
         return res.json({ url: uploadResponse.data.image.url });
