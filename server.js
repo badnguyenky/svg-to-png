@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const svg2img = require("svg2img");
 const axios = require("axios");
-const FormData = require("form-data");
 
 const app = express();
 app.use(cors());
@@ -18,15 +17,17 @@ app.post("/convert", (req, res) => {
   svg2img(svg, { format: "png" }, async (error, buffer) => {
     if (error) return res.status(500).json({ error: "Conversion failed" });
 
+    // Convert PNG buffer to Base64
+    const base64Image = buffer.toString("base64");
+
     try {
-      // Prepare image upload
-      const form = new FormData();
-      form.append("key", FREEIMAGE_API_KEY);
-      form.append("source", buffer, { filename: "converted.png", contentType: "image/png" });
-      
-      // Upload PNG to FreeImage.host
-      const uploadResponse = await axios.post("https://freeimage.host/api/1/upload", form, {
-        headers: form.getHeaders(),
+      // Upload Base64 PNG to FreeImage.host
+      const uploadResponse = await axios.post("https://freeimage.host/api/1/upload", null, {
+        params: {
+          key: FREEIMAGE_API_KEY,
+          source: base64Image,
+          format: "json"
+        }
       });
 
       if (uploadResponse.data.status_code === 200) {
@@ -35,7 +36,7 @@ app.post("/convert", (req, res) => {
         return res.status(500).json({ error: "Image upload failed", details: uploadResponse.data });
       }
     } catch (uploadError) {
-      return res.status(500).json({ error: "Image upload error", details: uploadError.message });
+      return res.status(500).json({ error: "Image upload error", details: uploadError.response?.data || uploadError.message });
     }
   });
 });
