@@ -1,17 +1,21 @@
 const express = require("express");
-const puppeteer = require("puppeteer");
-const cors = require("cors");
+const chromium = require("chrome-aws-lambda");
+const puppeteer = require("puppeteer-core");
 
 const app = express();
 app.use(express.json());
-app.use(cors());
 
 app.post("/convert", async (req, res) => {
     try {
         const { svg } = req.body;
         if (!svg) return res.status(400).send("SVG data is required");
 
-        const browser = await puppeteer.launch();
+        const browser = await puppeteer.launch({
+            args: chromium.args,
+            executablePath: await chromium.executablePath,
+            headless: chromium.headless,
+        });
+
         const page = await browser.newPage();
         await page.setContent(`<html><body>${svg}</body></html>`);
 
