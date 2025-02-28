@@ -1,21 +1,28 @@
 const express = require("express");
+const puppeteer = require("puppeteer");
 const cors = require("cors");
-const svg2img = require("svg2img");
 
 const app = express();
-app.use(cors());
 app.use(express.json());
+app.use(cors());
 
-app.post("/convert", (req, res) => {
-  const { svg } = req.body;
-  if (!svg) return res.status(400).json({ error: "SVG required" });
+app.post("/convert", async (req, res) => {
+    try {
+        const { svg } = req.body;
+        if (!svg) return res.status(400).send("SVG data is required");
 
-  svg2img(svg, { format: "png" }, (error, buffer) => {
-    if (error) return res.status(500).json({ error: "Conversion failed" });
-    res.setHeader("Content-Type", "image/png");
-    res.send(buffer);
-  });
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
+        await page.setContent(`<html><body>${svg}</body></html>`);
+
+        const pngBuffer = await page.screenshot();
+        await browser.close();
+
+        res.set("Content-Type", "image/png");
+        res.send(pngBuffer);
+    } catch (error) {
+        res.status(500).send("Conversion error: " + error.message);
+    }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(3000, () => console.log("Server running on port 3000"));
