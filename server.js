@@ -8,17 +8,12 @@ app.use(express.json());
 
 app.post("/convert", (req, res) => {
   const { svg } = req.body;
-  if (!svg) return res.status(400).json({ error: "SVG data is required" });
+  if (!svg) return res.status(400).json({ error: "SVG required" });
 
-  // Convert SVG to PNG
   svg2img(svg, { format: "png" }, (error, buffer) => {
     if (error) return res.status(500).json({ error: "Conversion failed" });
-
-    // Convert PNG buffer to Base64
-    const base64Image = buffer.toString("base64");
-
-    // Return Base64 string
-    return res.json({ base64: base64Image });
+    res.setHeader("Content-Type", "image/png");
+    res.send(buffer);
   });
 });
 
