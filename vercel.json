@@ -7,9 +7,8 @@
       { "src": "/.*", "dest": "server.js" }
     ],
     "functions": {
-      "api/*": {
-        "memory": 1024,
-        "timeout": 10
+      "api/*.js": {
+        "memory": 1024
       }
     }
   }
